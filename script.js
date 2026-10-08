@@ -177,7 +177,7 @@
       const s = stages.find((x) => x.el === e.target);
       if (s && e.isIntersecting && !reduce.matches) attachVideo(s);
     });
-  }, { rootMargin: '150% 0px' });
+  }, { rootMargin: '300% 0px' });
   stages.forEach((s) => videoObserver.observe(s.el));
 
   function playVideoOnce(stage) {
