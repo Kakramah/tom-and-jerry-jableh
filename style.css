@@ -78,8 +78,9 @@ html { scrollbar-color: var(--stone) var(--deep); }
 }
 .frame img { object-fit: cover; object-position: var(--pos, 50% 50%); }
 .frame .image-link { display: block; cursor: zoom-in; }
+.frame .scene-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 50%); pointer-events: none; }
 .js .frame .full { opacity: 0; }
-.js .stage-hero .frame .full { opacity: 1; }
+.js .stage-hero:not(.has-video) .frame .full { opacity: 1; }
 
 /* الممثلان: صفحة رسمات الركض، والإطار يتبدّل مع المسافة */
 .actor {
@@ -197,7 +198,7 @@ h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
 .source-ref { display: inline-flex; align-items: center; gap: .2rem; color: var(--gold-soft); font-size: .85rem; white-space: nowrap; }
 
 /* ===== الافتتاحية: الصورة تنكشف من موضع الفأر ===== */
-.stage-hero .full {
+.stage-hero:not(.has-video) .full {
   -webkit-mask-image: radial-gradient(circle at 50% 66%, black var(--reveal), transparent calc(var(--reveal) + 14%));
           mask-image: radial-gradient(circle at 50% 66%, black var(--reveal), transparent calc(var(--reveal) + 14%));
   opacity: 1 !important;
@@ -341,6 +342,6 @@ dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
   .pin { position: relative; min-height: 100svh; }
   .frame { transform: none !important; }
   .js .frame .full, .frame .full { opacity: 1 !important; -webkit-mask-image: none !important; mask-image: none !important; }
-  .actor { display: none; }
+  .actor, .scene-video { display: none; }
   .copy, .stage-hero h1 .line, .stage-hero .latin-line, .stage-hero .lede, .stage-hero .start-link { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }

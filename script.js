@@ -142,14 +142,72 @@
     el.style.transform = `translate3d(${(x - wpx / 2).toFixed(1)}px, ${(y - hpx - bob).toFixed(1)}px, 0) scaleX(${a.right ? 1 : -1})`;
   }
 
+  /* ===== الفيديو: لقطة Veo بين المشهد الفارغ والكامل، تتقدّم مع التمرير وترجع معه ===== */
+  const V_START = 0.04;
+  const V_END = 0.8;
+  function videoAt(stage, p) {
+    const v = stage.video;
+    const t = clamp((p - V_START) / (V_END - V_START)) * Math.max(0, v.duration - 0.05);
+    if (Math.abs(v.currentTime - t) > 1 / 60) v.currentTime = t;
+    /* الفيديو يقف على آخر إطار، فلا تبديل يقفز فيه الممثلان */
+    if (stage.full) stage.full.style.opacity = '0';
+  }
+  function attachVideo(stage) {
+    if (stage.video || stage.videoTried || !stage.frame) return;
+    stage.videoTried = true;
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.className = 'scene-video';
+    v.poster = stage.plate ? stage.plate.currentSrc || stage.plate.src : '';
+    v.addEventListener('loadeddata', () => {
+      stage.video = v;
+      stage.el.classList.add('has-video');
+      [stage.cat, stage.mouse].forEach((a) => a && (a.style.opacity = '0'));
+      if (stage.name === 'hero') playHero();
+      else if (wide.matches) onScroll();
+      else if (stage.inView) playVideoOnce(stage);
+    }, { once: true });
+    v.addEventListener('error', () => v.remove(), { once: true });
+    v.src = `videos/${stage.name}.mp4`;
+    stage.plate.after(v);
+  }
+  const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      const s = stages.find((x) => x.el === e.target);
+      if (s && e.isIntersecting && !reduce.matches) attachVideo(s);
+    });
+  }, { rootMargin: '150% 0px' });
+  stages.forEach((s) => videoObserver.observe(s.el));
+
+  function playVideoOnce(stage) {
+    const v = stage.video;
+    if (!v || stage.videoPlayed) return;
+    stage.videoPlayed = true;
+    v.currentTime = 0;
+    if (stage.full) stage.full.style.opacity = '0';
+    v.play().catch(() => { if (stage.full) stage.full.style.opacity = '1'; });
+  }
+  function playHero() {
+    const s = hero;
+    if (!s || !s.video) return;
+    s.full.style.opacity = '0';
+    const go = () => { s.video.play().catch(() => { s.full.style.opacity = '1'; }); };
+    if (root.classList.contains('is-ready')) go(); else setTimeout(go, 600);
+  }
+
   function render(stage, p, { zoom = true, dt = 16 } = {}) {
     const c = stage.conf;
     if (!c) return;
     const map = mapper(stage);
-    placeActor(stage, 'mouse', p, map, dt);
-    placeActor(stage, 'cat', p, map, dt);
     const [l0, l1] = c.land;
-    if (stage.full) stage.full.style.opacity = smooth(l0 - 0.02, l1, p).toFixed(3);
+    if (stage.video) {
+      if (wide.matches) videoAt(stage, p);
+    } else {
+      placeActor(stage, 'mouse', p, map, dt);
+      placeActor(stage, 'cat', p, map, dt);
+      if (stage.full) stage.full.style.opacity = smooth(l0 - 0.02, l1, p).toFixed(3);
+    }
     if (zoom) stage.frame.style.transform = `scale(${lerp(c.zoom[0], c.zoom[1], easeOut(p)).toFixed(4)})`;
     if (stage.veil) stage.veil.style.setProperty('--tint-a', lerp(c.tint[0], c.tint[1], smooth(0.02, 0.7, p)).toFixed(3));
     if (stage.copy && wide.matches) {
@@ -204,6 +262,8 @@
   /* ===== الهاتف: كل مكان يُعرض مرة بالزمن حين يظهر ===== */
   const played = new WeakSet();
   function play(stage) {
+    stage.inView = true;
+    if (stage.video) { playVideoOnce(stage); return; }
     if (played.has(stage) || !stage.conf) return;
     played.add(stage);
     const duration = 3600;
