@@ -56,6 +56,8 @@
       full: el.querySelector('.full'),
       cat: el.querySelector('.actor-cat'),
       mouse: el.querySelector('.actor-mouse'),
+      veil: el.querySelector('.veil'),
+      copy: el.querySelector('.copy'),
       conf: SCENES[el.dataset.scene],
       shown: null,
       state: { cat: { phase: 0, x: null, y: null }, mouse: { phase: 0, x: null, y: null } },
@@ -136,6 +138,7 @@
     el.style.backgroundSize = `${sheet.frames * 100}% 100%`;
     el.style.backgroundPosition = sheet.frames > 1 ? `${(frame / (sheet.frames - 1)) * 100}% 0` : '0 0';
     el.style.opacity = visible.toFixed(3);
+    el.style.filter = visible < 1 && visible > 0 ? `blur(${((1 - visible) * 3).toFixed(2)}px)` : '';
     el.style.transform = `translate3d(${(x - wpx / 2).toFixed(1)}px, ${(y - hpx - bob).toFixed(1)}px, 0) scaleX(${a.right ? 1 : -1})`;
   }
 
@@ -146,11 +149,13 @@
     placeActor(stage, 'mouse', p, map, dt);
     placeActor(stage, 'cat', p, map, dt);
     const [l0, l1] = c.land;
-    stage.frame.style.setProperty('--full', smooth(l0 - 0.02, l1, p).toFixed(3));
-    if (zoom) stage.frame.style.setProperty('--zoom', lerp(c.zoom[0], c.zoom[1], easeOut(p)).toFixed(4));
-    stage.el.style.setProperty('--tint-a', lerp(c.tint[0], c.tint[1], smooth(0.02, 0.7, p)).toFixed(3));
-    stage.el.style.setProperty('--copy-o', smooth(0.04, 0.2, p).toFixed(3));
-    stage.el.style.setProperty('--copy-y-shift', `${(1 - easeOut(clamp((p - 0.04) / 0.2))) * 26}px`);
+    if (stage.full) stage.full.style.opacity = smooth(l0 - 0.02, l1, p).toFixed(3);
+    if (zoom) stage.frame.style.transform = `scale(${lerp(c.zoom[0], c.zoom[1], easeOut(p)).toFixed(4)})`;
+    if (stage.veil) stage.veil.style.setProperty('--tint-a', lerp(c.tint[0], c.tint[1], smooth(0.02, 0.7, p)).toFixed(3));
+    if (stage.copy && wide.matches) {
+      stage.copy.style.opacity = smooth(0.04, 0.2, p).toFixed(3);
+      stage.copy.style.transform = `translate3d(0, ${((1 - easeOut(clamp((p - 0.04) / 0.2))) * 26).toFixed(1)}px, 0)`;
+    }
     if (stage.name === 'theatre' && p > 0.5) startCounter();
   }
 
@@ -158,10 +163,12 @@
   const hero = stages.find((s) => s.name === 'hero');
   function renderHero(p) {
     if (!hero) return;
-    hero.frame.style.setProperty('--zoom', lerp(1, 1.14, easeInOut(p)).toFixed(4));
-    hero.el.style.setProperty('--tint-a', lerp(0.22, 0.42, p).toFixed(3));
-    hero.el.style.setProperty('--copy-o', (1 - smooth(0.45, 0.85, p)).toFixed(3));
-    hero.el.style.setProperty('--copy-y-shift', `${-p * 40}px`);
+    hero.frame.style.transform = `scale(${lerp(1, 1.14, easeInOut(p)).toFixed(4)})`;
+    if (hero.veil) hero.veil.style.setProperty('--tint-a', lerp(0.22, 0.42, p).toFixed(3));
+    if (hero.copy) {
+      hero.copy.style.opacity = (1 - smooth(0.45, 0.85, p)).toFixed(3);
+      hero.copy.style.transform = `translate3d(0, ${(-p * 40).toFixed(1)}px, 0)`;
+    }
   }
 
   /* ===== التقدّم داخل المشهد المثبّت ===== */

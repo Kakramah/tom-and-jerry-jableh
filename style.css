@@ -69,8 +69,7 @@ html { scrollbar-color: var(--stone) var(--deep); }
 }
 .frame {
   position: absolute; inset: 0; z-index: -2;
-  transform: scale(var(--zoom, 1));
-  transform-origin: var(--zoom-origin, 50% 60%);
+  transform-origin: 50% 60%;
   will-change: transform;
 }
 .frame img, .frame .image-link {
@@ -79,8 +78,8 @@ html { scrollbar-color: var(--stone) var(--deep); }
 }
 .frame img { object-fit: cover; object-position: var(--pos, 50% 50%); }
 .frame .image-link { display: block; cursor: zoom-in; }
-.frame .full { opacity: var(--full, 1); }
-.js .frame .full { opacity: var(--full, 0); }
+.js .frame .full { opacity: 0; }
+.js .stage-hero .frame .full { opacity: 1; }
 
 /* الممثلان: صفحة رسمات الركض، والإطار يتبدّل مع المسافة */
 .actor {
@@ -90,8 +89,7 @@ html { scrollbar-color: var(--stone) var(--deep); }
   background-position: 0 0;
   pointer-events: none;
   opacity: 0;
-  will-change: transform, opacity;
-  filter: drop-shadow(0 calc(var(--ah, 60px) * .04) calc(var(--ah, 60px) * .05) rgba(var(--sea-rgb), .35));
+  will-change: transform, opacity, filter;
 }
 
 /* التراكب: أزرق مخضرّ صباحاً يخفّ مع وصول القارئ ويميل إلى الكهرمان عند الغروب */
@@ -129,8 +127,6 @@ html { scrollbar-color: var(--stone) var(--deep); }
   align-self: end;
   justify-self: start;
   text-shadow: 0 1px 16px rgba(var(--sea-rgb), .5);
-  opacity: var(--copy-o, 1);
-  transform: translateY(var(--copy-y-shift, 0px));
 }
 .stage[data-copy="end"] .copy { justify-self: end; }
 .stage[data-copy="sky"] .copy {
@@ -176,7 +172,9 @@ h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
   background: linear-gradient(var(--gold), var(--gold)) no-repeat right bottom / 0 1px;
   transition: background-size .5s var(--ease-out), color .3s;
 }
-.start-link:hover { background-size: 100% 1px; color: var(--sand); }
+@media (hover: hover) and (pointer: fine) {
+  .start-link:hover { background-size: 100% 1px; color: var(--sand); }
+      .dialog-caption button:hover, }
 .start-link svg { font-size: 1.1rem; animation: nudge 2.4s var(--ease-out) infinite; }
 @keyframes nudge { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(5px); } }
 
@@ -211,6 +209,8 @@ h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
 .is-ready .stage-hero h1 .line { clip-path: inset(-10% 0 -20% 0); transform: none; }
 .stage-hero .latin-line, .stage-hero .lede, .stage-hero .start-link { opacity: 0; transform: translateY(10px); transition: opacity 1s var(--ease-out) .5s, transform 1s var(--ease-out) .5s; }
 .is-ready .stage-hero .latin-line, .is-ready .stage-hero .lede, .is-ready .stage-hero .start-link { opacity: 1; transform: none; }
+.stage-hero .lede { transition-delay: .58s; }
+.stage-hero .start-link { transition-delay: .66s; }
 
 /* ===== الخاتمة ===== */
 .afterword {
@@ -231,7 +231,6 @@ h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
   border: 0; border-radius: 999px; cursor: pointer;
   transition: background-color .3s, transform .4s var(--ease-out);
 }
-.share-button:hover { background: var(--gold-soft); transform: translateY(-2px); }
 .share-button:active { transform: translateY(0); }
 
 .sources { margin: 2.5rem auto 0; text-align: right; max-width: var(--measure); font-size: .92rem; color: var(--sand-soft); }
@@ -266,7 +265,6 @@ h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
   color: var(--sand); background: rgba(244, 239, 230, .06);
   transition: background-color .3s, color .3s, transform .4s var(--ease-out);
 }
-.social-links a:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); }
 .social-links svg { width: 20px; height: 20px; }
 .social-links a[aria-label="واتساب"] svg { stroke: none; }
 .copyright { margin: 0; font-size: .8rem; unicode-bidi: isolate; color: var(--stone); }
@@ -289,7 +287,6 @@ dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
   width: 44px; height: 44px; display: grid; place-items: center;
   border: 0; border-radius: 50%; cursor: pointer; color: var(--sand); background: rgba(244, 239, 230, .08);
 }
-.dialog-caption button:hover { background: var(--gold); color: var(--ink); }
 .share-dialog { width: min(92vw, 30rem); padding: 2rem 1.5rem 1.6rem; position: fixed; }
 .share-dialog h2 { font-size: 1.7rem; margin-bottom: 1.2rem; }
 .share-dialog label { display: block; font-size: .85rem; color: var(--sand-soft); margin-bottom: .4rem; }
@@ -310,7 +307,6 @@ dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
   text-decoration: none; border-radius: 8px;
   background: rgba(244, 239, 230, .06); transition: background-color .3s, color .3s;
 }
-.share-options a:hover { background: var(--gold); color: var(--ink); }
 
 /* ===== الهاتف: لا تثبيت، والمطاردة تُعرض بالزمن حين يظهر المكان ===== */
 @media (max-width: 767px) {
