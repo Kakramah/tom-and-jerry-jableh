@@ -4,8 +4,9 @@
 @font-face { font-family: 'Amiri'; src: url('fonts/Amiri-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Cairo'; src: url('fonts/Cairo-Variable.woff2') format('woff2'); font-weight: 300 800; font-style: normal; font-display: swap; }
 
-/* تسجيل شدة التراكب حتى يتدرّج تغيّرها */
+/* قيم تتدرّج بالحركة */
 @property --tint-a { syntax: '<number>'; inherits: true; initial-value: .3; }
+@property --reveal { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 
 :root {
   /* البحر: أرضية الصفحة وتراكب الصور */
@@ -25,10 +26,9 @@
   --font-display: 'Amiri', 'Cairo', serif;
   --font-body: 'Cairo', 'Amiri', sans-serif;
 
-  --veil-strength: 1;
-  --lane-h: clamp(64px, 11vh, 120px);
+  --gutter: clamp(1.25rem, 5vw, 5.5rem);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
-  --measure: 34rem;
+  --measure: 31rem;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -40,13 +40,14 @@ body {
   line-height: 1.85;
   color: var(--sand);
   background: var(--deep);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 ::selection { background: var(--gold); color: var(--ink); }
 img { display: block; max-width: 100%; height: auto; }
 a { color: inherit; text-underline-offset: .25em; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 2px; }
 svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+html { scrollbar-color: var(--stone) var(--deep); }
 
 .skip-link {
   position: absolute; inset-inline-start: 1rem; top: -4rem; z-index: 50;
@@ -54,88 +55,124 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 }
 .skip-link:focus { top: 1rem; }
 
-/* ===== المشهد: صورة بملء الشاشة وتراكب ونص سفلي ===== */
-.scene {
-  position: relative;
-  min-height: 100svh;
-  display: grid;
-  align-items: end;
+/* ===== المسرح: مشهد مثبّت والتمرير يحرّك ما داخله ===== */
+.stage { position: relative; height: 270vh; }
+.stage-hero { height: 175vh; }
+.stage-last { height: 300vh; }
+.pin {
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;
   overflow: hidden;
   isolation: isolate;
-  padding: 0 clamp(1.25rem, 5vw, 5rem) calc(var(--lane-h) + clamp(2.5rem, 6vh, 4.5rem));
+  display: grid;
+  padding: clamp(1.5rem, 5vh, 3.5rem) var(--gutter) clamp(2.5rem, 9vh, 6rem);
 }
-.scene-figure { margin: 0; position: absolute; inset: 0; z-index: -2; overflow: hidden; }
-.scene-figure .image-link { display: block; position: absolute; inset: 0; cursor: zoom-in; }
-.scene-photo {
+.frame {
+  position: absolute; inset: 0; z-index: -2;
+  transform: scale(var(--zoom, 1));
+  transform-origin: var(--zoom-origin, 50% 60%);
+  will-change: transform;
+}
+.frame img, .frame .image-link {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  object-fit: cover; object-position: center 45%;
-  z-index: -2;
-  transform: scale(1.06);
-  transition: transform 2.4s var(--ease-out);
 }
-.scene.is-here .scene-photo { transform: scale(1); }
+.frame img { object-fit: cover; object-position: var(--pos, 50% 50%); }
+.frame .image-link { display: block; cursor: zoom-in; }
+.frame .full { opacity: var(--full, 1); }
+.js .frame .full { opacity: var(--full, 0); }
 
-/* التراكب: أزرق مخضرّ صباحاً يميل إلى الكهرمان مع تقدّم النهار */
-.scene-veil {
+/* الممثلان: صفحة رسمات الركض، والإطار يتبدّل مع المسافة */
+.actor {
+  position: absolute; left: 0; top: 0;
+  width: 10px; height: 10px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 calc(var(--ah, 60px) * .04) calc(var(--ah, 60px) * .05) rgba(var(--sea-rgb), .35));
+}
+
+/* التراكب: أزرق مخضرّ صباحاً يخفّ مع وصول القارئ ويميل إلى الكهرمان عند الغروب */
+.veil {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(ellipse 58% 72% at var(--copy-x, 86%) 100%, rgba(var(--sea-rgb), .9) 0%, rgba(var(--sea-rgb), .72) 40%, rgba(var(--sea-rgb), 0) 100%),
-    linear-gradient(to top, rgba(var(--sea-rgb), .78) 0%, rgba(var(--sea-rgb), .3) 18%, rgba(var(--sea-rgb), 0) 42%),
-    linear-gradient(rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a, .42)), rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a, .42)));
-  transition: --tint-a 2s var(--ease-out);
+    radial-gradient(ellipse 58% 75% at var(--copy-x, 86%) var(--copy-y, 100%), rgba(var(--sea-rgb), .9) 0%, rgba(var(--sea-rgb), .7) 38%, rgba(var(--sea-rgb), 0) 100%),
+    linear-gradient(to top, rgba(var(--sea-rgb), .55) 0%, rgba(var(--sea-rgb), 0) 30%),
+    linear-gradient(to bottom, rgba(var(--sea-rgb), .45) 0%, rgba(var(--sea-rgb), 0) 16%),
+    linear-gradient(rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a)), rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a)));
 }
-.scene:not(.is-here) .scene-veil { opacity: 1; }
-.scene.is-here .scene-veil { --tint-a: var(--tint-rest, .2); }
-.scene[data-tint="morning"]      { --tint-rgb: var(--teal-rgb); --tint-a: .34; --tint-rest: .22; }
-.scene[data-tint="late-morning"] { --tint-rgb: var(--teal-rgb); --tint-a: .4;  --tint-rest: .16; }
-.scene[data-tint="noon"]         { --tint-rgb: var(--teal-rgb); --tint-a: .36; --tint-rest: .12; }
-.scene[data-tint="afternoon"]    { --tint-rgb: var(--teal-rgb); --tint-a: .32; --tint-rest: .08; }
-.scene[data-tint="sunset"]       { --tint-rgb: var(--ember-rgb); --tint-a: .3;  --tint-rest: .04; }
-.scene[data-copy="left"] { --copy-x: 12%; }
+.stage[data-tint="morning"]      { --tint-rgb: var(--teal-rgb); }
+.stage[data-tint="late-morning"] { --tint-rgb: var(--teal-rgb); }
+.stage[data-tint="noon"]         { --tint-rgb: var(--teal-rgb); }
+.stage[data-tint="afternoon"]    { --tint-rgb: var(--teal-rgb); }
+.stage[data-tint="sunset"]       { --tint-rgb: var(--ember-rgb); }
+.stage[data-copy="end"] { --copy-x: 14%; }
+.stage[data-copy="sky"] .veil {
+  background:
+    linear-gradient(to top, rgba(var(--sea-rgb), .5) 0%, rgba(var(--sea-rgb), 0) 22%),
+    linear-gradient(rgba(var(--tint-rgb), var(--tint-a)), rgba(var(--tint-rgb), var(--tint-a)));
+}
 
-.scene figcaption {
-  position: absolute; inset-inline-end: clamp(1.25rem, 5vw, 5rem); top: clamp(1rem, 3vh, 2rem);
-  font-size: .78rem; letter-spacing: .02em; color: var(--sand-soft);
-  pointer-events: none;
+.credit {
+  position: absolute; inset-inline-end: var(--gutter); top: clamp(1rem, 3vh, 2rem);
+  margin: 0; font-size: .76rem; letter-spacing: .02em; color: var(--sand-soft);
+  opacity: .8;
 }
+.stage[data-copy="sky"] .credit { color: var(--deep); }
+
+/* ===== النص ===== */
+.copy {
+  position: relative;
+  max-width: var(--measure);
+  align-self: end;
+  justify-self: start;
+  text-shadow: 0 1px 16px rgba(var(--sea-rgb), .5);
+  opacity: var(--copy-o, 1);
+  transform: translateY(var(--copy-y-shift, 0px));
+}
+.stage[data-copy="end"] .copy { justify-self: end; }
+.stage[data-copy="sky"] .copy {
+  justify-self: center; align-self: start; text-align: center;
+  margin-top: clamp(3rem, 12vh, 8rem);
+  max-width: 36rem;
+  color: var(--deep); text-shadow: none;
+}
+.stage[data-copy="sky"] .copy p { color: var(--deep); }
+.stage[data-copy="sky"] h2 { color: var(--deep); }
+.stage[data-copy="sky"] .latin-line { text-align: center; color: var(--deep); opacity: .75; }
+.copy p { margin: 0 0 .85rem; color: var(--sand); text-wrap: pretty; }
+.copy p:last-child { margin-bottom: 0; }
 
 .latin-line {
-  margin: 0 0 .35rem;
+  margin: 0 0 .5rem;
   font-family: var(--font-body);
-  font-size: .78rem; font-weight: 600;
-  letter-spacing: .28em;
+  font-size: .74rem; font-weight: 600;
+  letter-spacing: .32em;
   color: var(--gold);
   text-align: right;
 }
 
-.hero-copy, .scene-copy {
-  max-width: var(--measure);
-  justify-self: start;
-  position: relative;
-}
-.scene-copy p { margin: 0 0 .9rem; color: var(--sand); text-wrap: pretty; }
-.hero-copy, .scene-copy { text-shadow: 0 1px 14px rgba(var(--sea-rgb), .55); }
-.scene-copy p:last-child { margin-bottom: 0; }
-
 h1, h2 {
   font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.08;
   margin: 0 0 1rem;
   color: var(--sand);
   text-wrap: balance;
 }
-h1 { font-size: clamp(3.2rem, 2rem + 6vw, 6rem); letter-spacing: -.01em; }
-h2 { font-size: clamp(2.3rem, 1.6rem + 3vw, 3.9rem); }
+h1 { font-size: clamp(3.4rem, 1.6rem + 7vw, 7.4rem); letter-spacing: -.01em; margin-bottom: 1.3rem; }
+h1 .line { display: block; }
+h2 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); }
+.turn { font-family: var(--font-display); font-size: 1.32em; line-height: 1.5; color: var(--gold-soft) !important; }
 
-.lede { font-size: clamp(1.1rem, 1rem + .4vw, 1.35rem); margin: 0 0 1.6rem; max-width: 30rem; color: var(--sand); text-wrap: balance; }
+.lede { font-size: clamp(1.1rem, 1rem + .4vw, 1.35rem); margin: 0 0 1.6rem; max-width: 27rem; color: var(--sand); text-wrap: balance; }
 
 .start-link {
   display: inline-flex; align-items: center; gap: .55rem;
   min-height: 44px; padding: .35rem 0;
   color: var(--gold-soft); font-weight: 600; text-decoration: none;
-  border-bottom: 1px solid rgba(var(--ember-rgb), 0);
   background: linear-gradient(var(--gold), var(--gold)) no-repeat right bottom / 0 1px;
   transition: background-size .5s var(--ease-out), color .3s;
 }
@@ -145,79 +182,39 @@ h2 { font-size: clamp(2.3rem, 1.6rem + 3vw, 3.9rem); }
 
 .closing-line {
   font-family: var(--font-display);
-  font-size: clamp(1.45rem, 1.1rem + 1.2vw, 2rem);
+  font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.3rem);
   line-height: 1.4;
-  color: var(--gold-soft);
-  margin-top: 1.4rem !important;
+  margin-top: 1.2rem !important;
 }
 
 /* عدّاد مقاعد المدرج */
-.seat-count { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-top: 1.3rem !important; }
+.seat-count { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-top: 1.4rem !important; }
 .count {
   font-family: var(--font-display); font-weight: 700;
-  font-size: clamp(2.6rem, 2rem + 2.4vw, 3.8rem); line-height: 1;
+  font-size: clamp(3rem, 2rem + 3vw, 4.6rem); line-height: 1;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
-.count-label { flex: 1 1 14rem; font-size: .98rem; color: var(--sand-soft); }
-.source-ref {
-  display: inline-flex; align-items: center; gap: .2rem;
-  color: var(--gold-soft); font-size: .85rem; white-space: nowrap;
-}
+.count-label { flex: 1 1 13rem; font-size: .96rem; color: var(--sand-soft); }
+.source-ref { display: inline-flex; align-items: center; gap: .2rem; color: var(--gold-soft); font-size: .85rem; white-space: nowrap; }
 
-/* ===== حارة المطاردة: القط والفأر يعبران أسفل كل مشهد ===== */
-.lane {
-  position: absolute; inset-inline: 0; bottom: 0;
-  height: var(--lane-h);
-  pointer-events: none;
-  z-index: 2;
+/* ===== الافتتاحية: الصورة تنكشف من موضع الفأر ===== */
+.stage-hero .full {
+  -webkit-mask-image: radial-gradient(circle at 50% 66%, black var(--reveal), transparent calc(var(--reveal) + 14%));
+          mask-image: radial-gradient(circle at 50% 66%, black var(--reveal), transparent calc(var(--reveal) + 14%));
+  opacity: 1 !important;
+  transition: --reveal 2.2s var(--ease-out) .35s;
 }
-.lane::after {
-  content: ""; position: absolute; inset-inline: 0; bottom: 14%;
-  height: 1px;
-  background: linear-gradient(to left, transparent, rgba(244, 239, 230, .18) 20%, rgba(244, 239, 230, .18) 80%, transparent);
-}
-.runner {
-  position: absolute; bottom: 14%;
-  left: 0;
-  background: no-repeat center bottom / contain;
-  will-change: transform;
-  transform: translateX(var(--x, 120vw));
-}
-.runner::before { content: none; }
-.runner-mouse { height: calc(var(--lane-h) * .58); width: calc(var(--lane-h) * .62); background-image: url('images/sprite-mouse.png'); }
-.runner-cat   { height: calc(var(--lane-h) * .6); width: calc(var(--lane-h) * 1.76); background-image: url('images/sprite-cat.png'); transform-origin: 50% 70%; }
-.lane.is-running .runner { animation: gallop .32s steps(2) infinite; }
-.lane.is-running .runner-cat { animation-duration: .4s; }
-.runner.is-tangled { animation: tangle .5s ease-in-out infinite !important; }
-.runner.is-slipping { animation: slip .9s var(--ease-out) 1 forwards !important; }
-.runner.is-resting { animation: none !important; opacity: 0; transition: opacity 1.2s var(--ease-out); }
-@keyframes gallop {
-  0% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -10%; rotate: -4deg; }
-}
-@keyframes tangle {
-  0%, 100% { rotate: -9deg; translate: 0 -6%; }
-  50% { rotate: 9deg; translate: 0 -12%; }
-}
-@keyframes slip {
-  0% { rotate: 0deg; }
-  45% { rotate: -200deg; translate: 0 -40%; }
-  100% { rotate: -360deg; translate: 0 0; }
-}
-
-/* موضع الصورة والنص بحسب مكان الشخصيتين فيها */
-#old-town .scene-photo { object-position: 100% 50%; }
-#harbour .scene-photo { object-position: 40% 50%; }
-#theatre .scene-photo { object-position: 70% 50%; }
-.scene[data-copy="left"] .scene-copy { justify-self: end; }
-
-/* ===== المشهد الأخير ===== */
-.scene-last { min-height: 110svh; }
+.is-ready .stage-hero .full { --reveal: 140%; }
+.stage-hero h1 .line { clip-path: inset(0 0 110% 0); transform: translateY(.4em); transition: clip-path 1.1s var(--ease-out), transform 1.1s var(--ease-out); }
+.stage-hero h1 .line + .line { transition-delay: .12s; }
+.is-ready .stage-hero h1 .line { clip-path: inset(-10% 0 -20% 0); transform: none; }
+.stage-hero .latin-line, .stage-hero .lede, .stage-hero .start-link { opacity: 0; transform: translateY(10px); transition: opacity 1s var(--ease-out) .5s, transform 1s var(--ease-out) .5s; }
+.is-ready .stage-hero .latin-line, .is-ready .stage-hero .lede, .is-ready .stage-hero .start-link { opacity: 1; transform: none; }
 
 /* ===== الخاتمة ===== */
 .afterword {
-  padding: clamp(3rem, 8vh, 5rem) clamp(1.25rem, 5vw, 5rem) 2rem;
+  padding: clamp(3.5rem, 9vh, 6rem) var(--gutter) 2rem;
   max-width: 46rem; margin-inline: auto;
   text-align: center;
 }
@@ -275,11 +272,7 @@ h2 { font-size: clamp(2.3rem, 1.6rem + 3vw, 3.9rem); }
 .copyright { margin: 0; font-size: .8rem; unicode-bidi: isolate; color: var(--stone); }
 
 /* ===== النوافذ ===== */
-dialog {
-  border: 0; padding: 0; color: var(--sand);
-  background: var(--deep);
-  max-width: min(96vw, 1400px);
-}
+dialog { border: 0; padding: 0; color: var(--sand); background: var(--deep); max-width: min(96vw, 1400px); }
 dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
 .dialog-close {
   position: absolute; top: .6rem; inset-inline-end: .6rem; z-index: 2;
@@ -319,39 +312,39 @@ dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
 }
 .share-options a:hover { background: var(--gold); color: var(--ink); }
 
-/* ===== الظهور ===== */
-.scene-copy, .hero-copy { opacity: 1; transform: none; transition: opacity 1.1s var(--ease-out), transform 1.1s var(--ease-out); }
-.js .scene:not(.is-here) .scene-copy { opacity: 0; transform: translateY(28px); }
-
-/* ===== الهاتف ===== */
+/* ===== الهاتف: لا تثبيت، والمطاردة تُعرض بالزمن حين يظهر المكان ===== */
 @media (max-width: 767px) {
-  :root { --lane-h: 76px; }
-  .scene { min-height: 0; display: block; padding: 0; }
-  .scene-figure, .scene > .scene-photo { position: relative; inset: auto; height: 62svh; }
-  .scene-figure .image-link { position: absolute; inset: 0; }
-  .scene > .scene-photo { position: absolute; inset: 0; height: 62svh; }
-  .scene-veil { inset: 0 0 auto; height: 62svh; }
-  .scene-copy, .hero-copy { padding: 1.4rem 1.25rem 2.2rem; max-width: none; background: var(--deep); }
-  .hero { padding-top: 62svh; }
-  .hero-copy { margin-top: -2px; }
-  .lane { top: calc(62svh - var(--lane-h)); bottom: auto; }
-  .scene figcaption { inset-inline-end: 1rem; }
-  .scene-last { min-height: 0; }
-  #old-town .scene-photo { object-position: 64% 50%; }
-  #theatre .scene-photo { object-position: 38% 50%; }
-  #harbour .scene-photo { object-position: 60% 50%; }
-  .scene-copy { margin-top: -1px; }
-  #corniche .scene-photo { object-position: 74% 50%; }
-  .scene-veil { background: linear-gradient(to top, rgba(var(--sea-rgb), 1) 0%, rgba(var(--sea-rgb), .7) 12%, rgba(var(--sea-rgb), 0) 42%), linear-gradient(rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a, .4)), rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a, .4))); }
-  .lane::after { display: none; }
-  .js .scene:not(.is-here) .scene-copy { transform: translateY(16px); }
+  .stage, .stage-hero, .stage-last { height: auto; }
+  .pin { position: relative; height: auto; display: block; padding: 0; overflow: visible; }
+  .frame { position: relative; height: 66svh; transform: none !important; overflow: hidden; }
+  .veil { inset: 0 0 auto; height: 66svh;
+    background:
+      linear-gradient(to top, rgba(var(--sea-rgb), 1) 0%, rgba(var(--sea-rgb), .6) 12%, rgba(var(--sea-rgb), 0) 40%),
+      linear-gradient(rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a)), rgba(var(--tint-rgb, var(--teal-rgb)), var(--tint-a))) !important; }
+  .copy, .stage[data-copy="sky"] .copy {
+    max-width: none; margin: -1px 0 0; padding: 1.2rem 1.25rem 2.6rem;
+    background: var(--deep); text-align: right; color: var(--sand); text-shadow: none;
+    opacity: 1 !important; transform: none !important;
+  }
+  .stage[data-copy="sky"] .copy p, .stage[data-copy="sky"] h2 { color: var(--sand); }
+  .stage[data-copy="sky"] .latin-line { text-align: right; color: var(--gold); opacity: 1; }
+  .stage[data-copy="sky"] .credit { color: var(--sand-soft); }
+  .credit { inset-inline-end: 1rem; }
+  .stage-hero .frame { height: 64svh; }
+  #old-town .frame { --pos: 58% 50% !important; }
+  #theatre .frame { --pos: 46% 50% !important; }
+  #harbour .frame { --pos: 42% 50% !important; }
+  #corniche .frame { --pos: 70% 50% !important; }
 }
 
-/* ===== الحركة المخففة ===== */
+/* ===== الحركة المخففة: الصور كاملة بلا تثبيت ===== */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .scene-photo { transform: none; }
-  .js .scene:not(.is-here) .scene-copy { opacity: 1; transform: none; }
-  .lane { display: none; }
+  .stage, .stage-hero, .stage-last { height: auto; }
+  .pin { position: relative; min-height: 100svh; }
+  .frame { transform: none !important; }
+  .js .frame .full, .frame .full { opacity: 1 !important; -webkit-mask-image: none !important; mask-image: none !important; }
+  .actor { display: none; }
+  .copy, .stage-hero h1 .line, .stage-hero .latin-line, .stage-hero .lede, .stage-hero .start-link { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }

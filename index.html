@@ -15,89 +15,110 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/eagle-emblem-metal.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/Amiri-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="images/hero-alley.webp" as="image">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skip-link" href="#old-town">انتقل إلى المطاردة</a>
 
-<header class="hero scene" data-tint="morning" data-chase="hero">
-  <img class="scene-photo" src="images/hero-alley.webp" alt="زقاق حجري ضيق في جبلة القديمة صباحاً، فأر كرتوني بني يركض نحو الكاميرا وظل قط طويل على الجدار خلفه" width="1376" height="768" fetchpriority="high">
-  <div class="scene-veil" aria-hidden="true"></div>
-  <div class="hero-copy">
-    <p class="latin-line" dir="ltr">TOM &amp; JERRY · JABLEH</p>
-    <h1>توم وجيري<br>في جبلة</h1>
-    <p class="lede">مطاردة تبدأ صباحاً في حارة حجرية، وتعبر المدينة كلها حتى البحر.</p>
-    <a class="start-link" href="#old-town">اتبع الأثر <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6"/></svg></a>
+<header class="stage stage-hero" id="top" data-scene="hero" data-tint="morning" data-copy="hero">
+  <div class="pin">
+    <div class="frame" data-pos="50% 50%">
+      <img class="plate" src="images/plate-hero.webp" alt="" width="1376" height="768" fetchpriority="high">
+      <img class="full" src="images/hero-alley.webp" alt="زقاق حجري ضيق في جبلة القديمة صباحاً، فأر كرتوني بني يركض نحو القارئ وظل قط طويل على الجدار خلفه" width="1376" height="768">
+    </div>
+    <div class="veil" aria-hidden="true"></div>
+    <div class="copy">
+      <p class="latin-line" dir="ltr">TOM &amp; JERRY · JABLEH</p>
+      <h1><span class="line">توم وجيري</span><span class="line">في جبلة</span></h1>
+      <p class="lede">مطاردة تبدأ صباحاً في حارة حجرية، وتعبر المدينة كلها حتى البحر.</p>
+      <a class="start-link" href="#old-town">اتبع الأثر <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6"/></svg></a>
+    </div>
   </div>
-  <div class="lane" aria-hidden="true"><span class="runner runner-mouse"></span><span class="runner runner-cat"></span></div>
 </header>
 
 <main>
-  <section class="scene" id="old-town" data-tint="late-morning" data-chase="tangle" aria-labelledby="old-town-title">
-    <figure class="scene-figure">
-      <a class="image-link" href="images/scene-old-town.webp" data-view data-title="الحارة القديمة" data-desc="تصوّر بصري مولَّد: القط عالق في حبل الغسيل، والفأر يفلت تحت القنطرة." aria-label="كبّر صورة الحارة القديمة">
-        <img class="scene-photo" src="images/scene-old-town.webp" alt="قط كرتوني رمادي عالق في حبل غسيل بين جدران حجرية، وفأر بني يفلت تحت قنطرة منخفضة" width="1376" height="652" loading="lazy">
-      </a>
-      <figcaption>تصوّر بصري · جبلة القديمة</figcaption>
-    </figure>
-    <div class="scene-veil" aria-hidden="true"></div>
-    <div class="scene-copy">
-      <p class="latin-line" dir="ltr">THE OLD TOWN</p>
-      <h2 id="old-town-title">الحارة القديمة</h2>
-      <p>خرج جيري من تحت باب أخضر، وخلفه ظلّ أطول منه بكثير. هنا تضيق الأزقة وتنخفض القناطر، وهذا كل ما يحتاجه فأر صغير.</p>
-      <p>أما توم فوجد حبل الغسيل قبل أن يجد الفأر.</p>
+  <section class="stage" id="old-town" data-scene="old-town" data-tint="late-morning" data-copy="start" aria-labelledby="old-town-title">
+    <div class="pin">
+      <div class="frame" data-pos="70% 50%">
+        <img class="plate" src="images/plate-old-town.webp" alt="" width="1376" height="768" loading="lazy">
+        <a class="image-link" href="images/scene-old-town.webp" data-view data-title="الحارة القديمة" data-desc="تصوّر بصري مولَّد: القط عالق في حبل الغسيل، والفأر يفلت أمام القنطرة." aria-label="كبّر صورة الحارة القديمة">
+          <img class="full" src="images/scene-old-town.webp" alt="قط كرتوني رمادي عالق في حبل غسيل بين جدران حجرية، وفأر بني يفلت أمام قنطرة منخفضة" width="1376" height="768" loading="lazy">
+        </a>
+        <div class="actor actor-cat" aria-hidden="true"></div>
+        <div class="actor actor-mouse" aria-hidden="true"></div>
+      </div>
+      <div class="veil" aria-hidden="true"></div>
+      <p class="credit">تصوّر بصري · جبلة القديمة</p>
+      <div class="copy">
+        <p class="latin-line" dir="ltr">THE OLD TOWN</p>
+        <h2 id="old-town-title">الحارة القديمة</h2>
+        <p>خرج جيري من تحت باب أخضر، وخلفه ظلّ أطول منه بكثير. هنا تضيق الأزقة وتنخفض القناطر، وهذا كل ما يحتاجه فأر صغير.</p>
+        <p class="turn">أما توم فوجد حبل الغسيل قبل أن يجد الفأر.</p>
+      </div>
     </div>
-    <div class="lane" aria-hidden="true"><span class="runner runner-mouse"></span><span class="runner runner-cat"></span></div>
   </section>
 
-  <section class="scene" id="theatre" data-tint="noon" data-chase="close" aria-labelledby="theatre-title">
-    <figure class="scene-figure">
-      <a class="image-link" href="images/scene-theatre.webp" data-view data-title="المدرج الروماني" data-desc="تصوّر بصري مولَّد: الفأر يركض على صف حجري، والقط يقفز الصفوف خلفه." aria-label="كبّر صورة المدرج الروماني">
-        <img class="scene-photo" src="images/scene-theatre.webp" alt="مدرج روماني من حجر قديم، فأر كرتوني صغير يركض على أحد صفوفه وقط يقفز من صف إلى صف خلفه" width="1376" height="559" loading="lazy">
-      </a>
-      <figcaption>تصوّر بصري · المدرج الروماني</figcaption>
-    </figure>
-    <div class="scene-veil" aria-hidden="true"></div>
-    <div class="scene-copy">
-      <p class="latin-line" dir="ltr">THE ROMAN THEATRE</p>
-      <h2 id="theatre-title">المدرج الروماني</h2>
-      <p>قفز توم الصفوف الحجرية صفاً بعد صف، وجيري يركض على صفّ واحد لا يتركه.</p>
-      <p class="seat-count"><span class="count" data-target="7000">٧٬٠٠٠</span><span class="count-label">متفرج يتسع لهم المدرج، وجمهوره اليوم اثنان. <a class="source-ref" href="https://en.wikipedia.org/wiki/Jableh" target="_blank" rel="noopener noreferrer">المصدر<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></span></p>
+  <section class="stage" id="theatre" data-scene="theatre" data-tint="noon" data-copy="start" aria-labelledby="theatre-title">
+    <div class="pin">
+      <div class="frame" data-pos="62% 50%">
+        <img class="plate" src="images/plate-theatre.webp" alt="" width="1376" height="768" loading="lazy">
+        <a class="image-link" href="images/scene-theatre.webp" data-view data-title="المدرج الروماني" data-desc="تصوّر بصري مولَّد: الفأر يركض على صف حجري، والقط يقفز الصفوف خلفه." aria-label="كبّر صورة المدرج الروماني">
+          <img class="full" src="images/scene-theatre.webp" alt="مدرج روماني من حجر قديم، فأر كرتوني صغير يركض على أحد صفوفه وقط يقفز من صف إلى صف خلفه" width="1376" height="768" loading="lazy">
+        </a>
+        <div class="actor actor-cat" aria-hidden="true"></div>
+        <div class="actor actor-mouse" aria-hidden="true"></div>
+      </div>
+      <div class="veil" aria-hidden="true"></div>
+      <p class="credit">تصوّر بصري · المدرج الروماني</p>
+      <div class="copy">
+        <p class="latin-line" dir="ltr">THE ROMAN THEATRE</p>
+        <h2 id="theatre-title">المدرج الروماني</h2>
+        <p>قفز توم الصفوف الحجرية صفاً بعد صف، وجيري يركض على صفّ واحد لا يتركه.</p>
+        <p class="seat-count"><span class="count" data-target="7000">٧٬٠٠٠</span><span class="count-label">متفرج يتسع لهم المدرج، وجمهوره اليوم اثنان. <a class="source-ref" href="https://en.wikipedia.org/wiki/Jableh" target="_blank" rel="noopener noreferrer">المصدر<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></span></p>
+      </div>
     </div>
-    <div class="lane" aria-hidden="true"><span class="runner runner-mouse"></span><span class="runner runner-cat"></span></div>
   </section>
 
-  <section class="scene" id="harbour" data-tint="afternoon" data-chase="slip" aria-labelledby="harbour-title">
-    <figure class="scene-figure">
-      <a class="image-link" href="images/scene-harbour.webp" data-view data-title="ميناء الصيد" data-desc="تصوّر بصري مولَّد: الفأر يقفز إلى حبل قارب، والقط ينزلق على الرصيف المبلل." aria-label="كبّر صورة ميناء الصيد">
-        <img class="scene-photo" src="images/scene-harbour.webp" alt="رصيف ميناء صيد مبلل وقوارب خشبية، فأر كرتوني يقفز إلى حبل قارب أزرق وقط ينزلق بين صناديق السمك" width="1376" height="614" loading="lazy">
-      </a>
-      <figcaption>تصوّر بصري · ميناء جبلة</figcaption>
-    </figure>
-    <div class="scene-veil" aria-hidden="true"></div>
-    <div class="scene-copy">
-      <p class="latin-line" dir="ltr">THE FISHING HARBOUR</p>
-      <h2 id="harbour-title">ميناء الصيد</h2>
-      <p>عند الميناء حبال مبللة وشباك خضراء وصناديق مكدّسة. قفز جيري إلى حبل قارب أزرق، وكان لرصيف الميناء المبلل رأي آخر في توم.</p>
+  <section class="stage" id="harbour" data-scene="harbour" data-tint="afternoon" data-copy="start" aria-labelledby="harbour-title">
+    <div class="pin">
+      <div class="frame" data-pos="45% 50%">
+        <img class="plate" src="images/plate-harbour.webp" alt="" width="1376" height="768" loading="lazy">
+        <a class="image-link" href="images/scene-harbour.webp" data-view data-title="ميناء الصيد" data-desc="تصوّر بصري مولَّد: الفأر يقفز إلى حبل قارب، والقط ينزلق على الرصيف المبلل." aria-label="كبّر صورة ميناء الصيد">
+          <img class="full" src="images/scene-harbour.webp" alt="رصيف ميناء صيد مبلل وقوارب خشبية، فأر كرتوني يقفز إلى حبل قارب أزرق وقط ينزلق بين صناديق السمك" width="1376" height="768" loading="lazy">
+        </a>
+        <div class="actor actor-cat" aria-hidden="true"></div>
+        <div class="actor actor-mouse" aria-hidden="true"></div>
+      </div>
+      <div class="veil" aria-hidden="true"></div>
+      <p class="credit">تصوّر بصري · ميناء جبلة</p>
+      <div class="copy">
+        <p class="latin-line" dir="ltr">THE FISHING HARBOUR</p>
+        <h2 id="harbour-title">ميناء الصيد</h2>
+        <p>عند الميناء حبال مبللة وشباك خضراء وصناديق مكدّسة. قفز جيري إلى حبل قارب أزرق، وكان لرصيف الميناء المبلل رأي آخر في توم.</p>
+      </div>
     </div>
-    <div class="lane" aria-hidden="true"><span class="runner runner-mouse"></span><span class="runner runner-cat"></span></div>
   </section>
 
-  <section class="scene scene-last" id="corniche" data-copy="left" data-tint="sunset" data-chase="rest" aria-labelledby="corniche-title">
-    <figure class="scene-figure">
-      <a class="image-link" href="images/scene-corniche.webp" data-view data-title="سور البحر" data-desc="تصوّر بصري مولَّد: القط والفأر جالسان جنباً إلى جنب على سور البحر عند الغروب." aria-label="كبّر صورة سور البحر">
-        <img class="scene-photo" src="images/scene-corniche.webp" alt="قط وفأر كرتونيان من الخلف جالسان على سور حجري أمام البحر عند الغروب" width="1376" height="768" loading="lazy">
-      </a>
-      <figcaption>تصوّر بصري · كورنيش جبلة</figcaption>
-    </figure>
-    <div class="scene-veil" aria-hidden="true"></div>
-    <div class="scene-copy">
-      <p class="latin-line" dir="ltr">THE SEA WALL</p>
-      <h2 id="corniche-title">آخر النهار</h2>
-      <p>وصلا إلى سور البحر متعبَين. جلس توم، وجلس جيري بجانبه، ونسي الاثنان لماذا كانا يركضان.</p>
-      <p class="closing-line">تنتهي المطاردة عند البحر.</p>
+  <section class="stage stage-last" id="corniche" data-scene="corniche" data-tint="sunset" data-copy="sky" aria-labelledby="corniche-title">
+    <div class="pin">
+      <div class="frame" data-pos="60% 50%">
+        <img class="plate" src="images/plate-corniche.webp" alt="" width="1376" height="768" loading="lazy">
+        <a class="image-link" href="images/scene-corniche.webp" data-view data-title="سور البحر" data-desc="تصوّر بصري مولَّد: القط والفأر جالسان جنباً إلى جنب على سور البحر عند الغروب." aria-label="كبّر صورة سور البحر">
+          <img class="full" src="images/scene-corniche.webp" alt="قط وفأر كرتونيان من الخلف جالسان على سور حجري أمام البحر عند الغروب" width="1376" height="768" loading="lazy">
+        </a>
+        <div class="actor actor-cat" aria-hidden="true"></div>
+        <div class="actor actor-mouse" aria-hidden="true"></div>
+      </div>
+      <div class="veil" aria-hidden="true"></div>
+      <p class="credit">تصوّر بصري · كورنيش جبلة</p>
+      <div class="copy">
+        <p class="latin-line" dir="ltr">THE SEA WALL</p>
+        <h2 id="corniche-title">آخر النهار</h2>
+        <p>وصلا إلى سور البحر متعبَين. جلس توم، وجلس جيري بجانبه، ونسي الاثنان لماذا كانا يركضان.</p>
+        <p class="closing-line">تنتهي المطاردة عند البحر.</p>
+      </div>
     </div>
-    <div class="lane" aria-hidden="true"><span class="runner runner-mouse"></span><span class="runner runner-cat"></span></div>
   </section>
 
   <section class="afterword" aria-label="المشاركة والمصادر">
@@ -130,7 +151,7 @@
 
 <dialog id="image-dialog" class="image-dialog" aria-labelledby="image-title">
   <button class="dialog-close" type="button" aria-label="أغلق الصورة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  <img id="enlarged-image" src="images/scene-old-town.webp" alt="" width="1376" height="652">
+  <img id="enlarged-image" src="images/scene-old-town.webp" alt="" width="1376" height="768">
   <div class="dialog-caption">
     <button id="previous-image" type="button" aria-label="الصورة السابقة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <div><h2 id="image-title"></h2><p id="image-description"></p></div>

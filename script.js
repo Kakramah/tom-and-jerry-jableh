@@ -1,187 +1,257 @@
-/* توم وجيري في جبلة: المطاردة مع التمرير، والعدّاد، والصور المكبّرة، والمشاركة */
+/* توم وجيري في جبلة: مشاهد مثبّتة يدخلها القط والفأر راكضَين حتى وضعيتهما في الصورة */
 (() => {
-  document.documentElement.classList.add('js');
+  const root = document.documentElement;
+  root.classList.add('js');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   const wide = window.matchMedia('(min-width: 768px)');
-  const scenes = [...document.querySelectorAll('.scene')];
 
-  /* وصول القارئ إلى المكان: يرتفع التراكب ويظهر النص */
-  const hereObserver = new IntersectionObserver((entries) => {
-    entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('is-here'); });
-  }, { threshold: 0.28 });
-  scenes.forEach((s) => hereObserver.observe(s));
-
-  /* ===== المطاردة ===== */
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
   const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-  const lanes = scenes.map((scene) => {
-    const lane = scene.querySelector('.lane');
-    if (!lane) return null;
+  /* ===== رسمات الركض: صفّ أفقي من الإطارات، كل إطار بالحجم نفسه وقدمه على خط واحد ===== */
+  const SHEETS = {
+    cat: { src: 'images/run-cat-strip.png', frames: 4, aspect: 2.53 },
+    mouse: { src: 'images/run-mouse-strip.png', frames: 6, aspect: 0.98 },
+  };
+
+  /* ===== مسار كل ممثل في كل مكان =====
+     u وv موضع القدم في الصورة (نسبة من عرضها وارتفاعها)، وh ارتفاع الممثل نسبةً إلى ارتفاع الصورة.
+     t من 0 إلى 1 مع عبور القارئ للمشهد المثبّت. right: يركض نحو اليمين فتنقلب الرسمة.
+     land: نافذة الوصول، يذوب فيها الممثل وتظهر الصورة الكاملة بوضعيته الحقيقية. */
+  const SCENES = {
+    'old-town': {
+      tint: [0.42, 0.14], zoom: [1.1, 1], land: [0.6, 0.74],
+      mouse: { right: true, h: 0.17, path: [[0.08, -0.12, 0.84], [0.52, 0.62, 0.815]] },
+      cat: { right: true, h: 0.24, hop: 0, path: [[0.14, -0.4, 0.86], [0.5, 0.3, 0.82], [0.6, 0.44, 0.72]] },
+    },
+    theatre: {
+      tint: [0.38, 0.1], zoom: [1.12, 1], land: [0.62, 0.76],
+      mouse: { right: false, h: 0.09, path: [[0.06, 1.12, 0.67], [0.56, 0.41, 0.67]] },
+      cat: { right: false, h: 0.15, hop: 0.07, hops: 4, path: [[0.1, 1.45, 0.47], [0.6, 0.72, 0.42]] },
+    },
+    harbour: {
+      tint: [0.34, 0.06], zoom: [1.1, 1], land: [0.62, 0.76],
+      mouse: { right: true, h: 0.15, path: [[0.06, -0.12, 0.66], [0.38, 0.47, 0.6], [0.56, 0.62, 0.42]] },
+      cat: { right: true, h: 0.24, hop: 0, path: [[0.12, -0.45, 0.74], [0.6, 0.29, 0.73]] },
+    },
+    corniche: {
+      tint: [0.3, 0.03], zoom: [1.08, 1], land: [0.62, 0.78],
+      mouse: { right: true, h: 0.12, path: [[0.08, -0.12, 0.72], [0.35, 0.3, 0.8], [0.58, 0.76, 0.885]] },
+      cat: { right: true, h: 0.2, hop: 0, path: [[0.12, -0.4, 0.7], [0.4, 0.2, 0.78], [0.6, 0.66, 0.9]] },
+    },
+  };
+
+  const stages = [...document.querySelectorAll('.stage')].map((el) => {
+    const frame = el.querySelector('.frame');
+    if (frame && frame.dataset.pos) frame.style.setProperty('--pos', frame.dataset.pos);
     return {
-      scene, lane,
-      mode: scene.dataset.chase,
-      mouse: lane.querySelector('.runner-mouse'),
-      cat: lane.querySelector('.runner-cat'),
-      slipped: false,
+      el,
+      name: el.dataset.scene,
+      frame,
+      pin: el.querySelector('.pin'),
+      plate: el.querySelector('.plate'),
+      full: el.querySelector('.full'),
+      cat: el.querySelector('.actor-cat'),
+      mouse: el.querySelector('.actor-mouse'),
+      conf: SCENES[el.dataset.scene],
     };
-  }).filter(Boolean);
+  });
 
-  /* كل مكان له حركته: p من 0 إلى 1 مع عبور القارئ للمكان */
-  function choreograph(l, p) {
-    const W = l.lane.clientWidth;
-    const mw = l.mouse.offsetWidth;
-    const cw = l.cat.offsetWidth;
-    const start = W + 30;
-    const end = -cw - 60;
-    let mx; let cx;
-    l.cat.classList.remove('is-tangled');
+  /* ===== صفحات الركض: الرسمات تنظر يميناً، وتُقلب حين يركض الممثل يساراً ===== */
+  function loadSheet(key) {
+    const s = SHEETS[key];
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { s.aspect = (img.naturalWidth / s.frames) / img.naturalHeight; resolve(); };
+      img.onerror = resolve;
+      img.src = s.src;
+    });
+  }
 
-    switch (l.mode) {
-      case 'hero': {
-        /* الفأر في الصورة منذ البداية، والقط يدخل من خلفه */
-        mx = lerp(W * 0.58, end, easeInOut(clamp(p * 1.1)));
-        cx = lerp(start + cw, end + cw * 2.2, easeInOut(clamp(p * 1.15)));
-        cx = Math.max(cx, mx + mw * 1.6);
-        break;
-      }
-      case 'tangle': {
-        /* القط يعلق في حبل الغسيل ثم ينفلت */
-        const t = easeInOut(clamp((p - 0.05) / 0.9));
-        mx = lerp(start, end, t);
-        const stuckAt = lerp(start, end, 0.42) + cw * 1.4;
-        if (p < 0.38) cx = lerp(start + cw * 1.4, stuckAt, clamp(p / 0.38));
-        else if (p < 0.6) { cx = stuckAt; l.cat.classList.add('is-tangled'); }
-        else cx = lerp(stuckAt, end, easeOut(clamp((p - 0.6) / 0.4)));
-        break;
-      }
-      case 'close': {
-        /* في المدرج يقترب القط ولا يلحق */
-        const t = easeInOut(clamp((p - 0.05) / 0.9));
-        mx = lerp(start, end, t);
-        cx = mx + lerp(cw * 2.6, mw * 1.1, clamp(p * 1.2));
-        break;
-      }
-      case 'slip': {
-        /* على الرصيف المبلل ينزلق القط ويتأخر */
-        const t = easeInOut(clamp((p - 0.05) / 0.9));
-        mx = lerp(start, end, t);
-        const lag = p < 0.5 ? cw * 0.9 : lerp(cw * 0.9, cw * 3.2, easeOut(clamp((p - 0.5) / 0.3)));
-        cx = mx + lag;
-        if (p >= 0.5 && !l.slipped) {
-          l.slipped = true;
-          l.cat.classList.add('is-slipping');
-          l.cat.addEventListener('animationend', () => l.cat.classList.remove('is-slipping'), { once: true });
-        }
-        if (p < 0.35) l.slipped = false;
-        break;
-      }
-      case 'rest': {
-        /* آخر النهار: يتباطآن حتى يجلسا معاً فيذوبان في الصورة */
-        const t = easeOut(clamp(p / 0.55));
-        const restX = W * 0.4;
-        mx = lerp(start, restX, t);
-        cx = lerp(start + cw * 2.4, restX + mw * 1.05, t);
-        const resting = p > 0.56;
-        l.mouse.classList.toggle('is-resting', resting);
-        l.cat.classList.toggle('is-resting', resting);
-        break;
-      }
-      default: {
-        mx = lerp(start, end, p);
-        cx = mx + cw;
+  /* ===== من نسبة في الصورة إلى بكسل داخل الإطار، بمنطق object-fit: cover ===== */
+  function mapper(stage) {
+    const fw = stage.frame.clientWidth;
+    const fh = stage.frame.clientHeight;
+    const img = stage.full || stage.plate;
+    const iw = img.naturalWidth || Number(img.getAttribute('width'));
+    const ih = img.naturalHeight || Number(img.getAttribute('height'));
+    const scale = Math.max(fw / iw, fh / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const pos = getComputedStyle(stage.frame).getPropertyValue('--pos').trim().split(/\s+/).map(parseFloat);
+    const ox = (fw - dw) * ((Number.isFinite(pos[0]) ? pos[0] : 50) / 100);
+    const oy = (fh - dh) * ((Number.isFinite(pos[1]) ? pos[1] : 50) / 100);
+    return { x: (u) => ox + u * dw, y: (v) => oy + v * dh, h: (f) => f * dh };
+  }
+
+  function pointAt(path, t) {
+    if (t <= path[0][0]) return { u: path[0][1], v: path[0][2], k: 0 };
+    const last = path[path.length - 1];
+    if (t >= last[0]) return { u: last[1], v: last[2], k: 1 };
+    for (let i = 0; i < path.length - 1; i += 1) {
+      const a = path[i]; const b = path[i + 1];
+      if (t >= a[0] && t <= b[0]) {
+        const local = easeInOut((t - a[0]) / (b[0] - a[0]));
+        return { u: lerp(a[1], b[1], local), v: lerp(a[2], b[2], local), k: (t - path[0][0]) / (last[0] - path[0][0]) };
       }
     }
-    l.mouse.style.setProperty('--x', `${Math.round(mx)}px`);
-    l.cat.style.setProperty('--x', `${Math.round(cx)}px`);
+    return { u: last[1], v: last[2], k: 1 };
   }
 
-  function progressOf(scene) {
-    const r = scene.getBoundingClientRect();
-    const vh = window.innerHeight;
-    if (scene.classList.contains('hero')) return clamp(-r.top / (r.height * 0.85));
-    return clamp((vh - r.top) / (vh + r.height));
+  function placeActor(stage, key, p, map) {
+    const el = stage[key];
+    const a = stage.conf && stage.conf[key];
+    if (!el || !a) return;
+    const sheet = SHEETS[key];
+    const hpx = map.h(a.h);
+    const wpx = hpx * sheet.aspect;
+    const pt = pointAt(a.path, p);
+    let x = map.x(pt.u);
+    let y = map.y(pt.v);
+    if (a.hop) y -= map.h(a.hop) * Math.abs(Math.sin(Math.PI * (a.hops || 3) * pt.k));
+
+    /* الإطار يتبدّل مع المسافة المقطوعة، لا مع الزمن */
+    const start = a.path[0]; const end = a.path[a.path.length - 1];
+    const travel = Math.hypot(map.x(end[1]) - map.x(start[1]), map.y(end[2]) - map.y(start[2]));
+    const stride = Math.max(hpx * 0.42, 8);
+    const frame = sheet.frames > 1 ? Math.floor((pt.k * travel) / stride) % sheet.frames : 0;
+
+    const [l0, l1] = stage.conf.land;
+    const visible = p > start[0] - 0.01 ? 1 - smooth(l0, l1, p) : 0;
+    const bob = sheet.frames > 1 ? 0 : Math.abs(Math.sin(pt.k * travel / stride * Math.PI)) * hpx * 0.06;
+
+    el.style.width = `${wpx}px`;
+    el.style.height = `${hpx}px`;
+    el.style.setProperty('--ah', `${hpx}px`);
+    el.style.backgroundImage = `url('${sheet.src}')`;
+    el.style.backgroundSize = `${sheet.frames * 100}% 100%`;
+    el.style.backgroundPosition = sheet.frames > 1 ? `${(frame / (sheet.frames - 1)) * 100}% 0` : '0 0';
+    el.style.opacity = visible.toFixed(3);
+    el.style.transform = `translate3d(${(x - wpx / 2).toFixed(1)}px, ${(y - hpx - bob).toFixed(1)}px, 0) scaleX(${a.right ? 1 : -1})`;
   }
 
-  /* الشاشة العريضة: الحركة تتبع التمرير، والركض حين يتحرك القارئ */
+  function render(stage, p, { zoom = true } = {}) {
+    const c = stage.conf;
+    if (!c) return;
+    const map = mapper(stage);
+    placeActor(stage, 'mouse', p, map);
+    placeActor(stage, 'cat', p, map);
+    const [l0, l1] = c.land;
+    stage.frame.style.setProperty('--full', smooth(l0 - 0.02, l1, p).toFixed(3));
+    if (zoom) stage.frame.style.setProperty('--zoom', lerp(c.zoom[0], c.zoom[1], easeOut(p)).toFixed(4));
+    stage.el.style.setProperty('--tint-a', lerp(c.tint[0], c.tint[1], smooth(0.02, 0.7, p)).toFixed(3));
+    stage.el.style.setProperty('--copy-o', smooth(0.04, 0.2, p).toFixed(3));
+    stage.el.style.setProperty('--copy-y-shift', `${(1 - easeOut(clamp((p - 0.04) / 0.2))) * 26}px`);
+    if (stage.name === 'theatre' && p > 0.5) startCounter();
+  }
+
+  /* ===== الافتتاحية ===== */
+  const hero = stages.find((s) => s.name === 'hero');
+  function renderHero(p) {
+    if (!hero) return;
+    hero.frame.style.setProperty('--zoom', lerp(1, 1.14, easeInOut(p)).toFixed(4));
+    hero.el.style.setProperty('--tint-a', lerp(0.22, 0.42, p).toFixed(3));
+    hero.el.style.setProperty('--copy-o', (1 - smooth(0.45, 0.85, p)).toFixed(3));
+    hero.el.style.setProperty('--copy-y-shift', `${-p * 40}px`);
+  }
+
+  /* ===== التقدّم داخل المشهد المثبّت ===== */
+  function progress(stage) {
+    const r = stage.el.getBoundingClientRect();
+    const span = r.height - window.innerHeight;
+    return span > 0 ? clamp(-r.top / span) : 0;
+  }
+
   let ticking = false;
-  let idleTimer = 0;
-  function onScroll() {
-    if (!ticking) {
-      ticking = true;
-      requestAnimationFrame(() => {
-        lanes.forEach((l) => {
-          const r = l.scene.getBoundingClientRect();
-          if (r.bottom < -100 || r.top > window.innerHeight + 100) return;
-          choreograph(l, progressOf(l.scene));
-          l.lane.classList.add('is-running');
-        });
-        ticking = false;
-      });
-    }
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => lanes.forEach((l) => l.lane.classList.remove('is-running')), 180);
+  function frameLoop() {
+    ticking = false;
+    stages.forEach((s) => {
+      const r = s.el.getBoundingClientRect();
+      if (r.bottom < -50 || r.top > window.innerHeight + 50) return;
+      if (s.name === 'hero') renderHero(progress(s));
+      else render(s, progress(s));
+    });
   }
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(frameLoop); } };
 
-  /* الهاتف: عبور واحد بالزمن حين يظهر المكان، بلا ربط بالتمرير */
+  /* ===== الهاتف: كل مكان يُعرض مرة بالزمن حين يظهر ===== */
   const played = new WeakSet();
-  function playOnce(l) {
-    if (played.has(l)) return;
-    played.add(l);
-    const duration = l.mode === 'rest' ? 2600 : 3200;
+  function play(stage) {
+    if (played.has(stage) || !stage.conf) return;
+    played.add(stage);
+    const duration = 3600;
     const t0 = performance.now();
-    l.lane.classList.add('is-running');
     const step = (now) => {
       const p = clamp((now - t0) / duration);
-      choreograph(l, l.mode === 'hero' ? p : p * 0.98);
+      render(stage, p, { zoom: false });
       if (p < 1) requestAnimationFrame(step);
-      else l.lane.classList.remove('is-running');
     };
     requestAnimationFrame(step);
   }
-  const laneObserver = new IntersectionObserver((entries) => {
+  const mobileObserver = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
-      const l = lanes.find((x) => x.lane === e.target);
-      if (l) playOnce(l);
+      const s = stages.find((x) => x.frame === e.target);
+      if (s) play(s);
     });
-  }, { threshold: 0.9 });
+  }, { threshold: 0.6 });
 
-  function setupChase() {
+  function setup() {
     window.removeEventListener('scroll', onScroll);
-    laneObserver.disconnect();
+    window.removeEventListener('resize', onScroll);
+    mobileObserver.disconnect();
     if (reduce.matches) return;
     if (wide.matches) {
       window.addEventListener('scroll', onScroll, { passive: true });
-      lanes.forEach((l) => choreograph(l, progressOf(l.scene)));
+      window.addEventListener('resize', onScroll);
+      frameLoop();
     } else {
-      lanes.forEach((l) => { choreograph(l, 0); laneObserver.observe(l.lane); });
+      stages.forEach((s) => {
+        if (s.name === 'hero') return;
+        if (!played.has(s)) render(s, 0, { zoom: false });
+        mobileObserver.observe(s.frame);
+      });
     }
   }
-  setupChase();
-  wide.addEventListener('change', setupChase);
-  reduce.addEventListener('change', setupChase);
-  window.addEventListener('resize', () => { if (wide.matches && !reduce.matches) onScroll(); });
+
+  Promise.all([loadSheet('cat'), loadSheet('mouse')]).then(() => {
+    setup();
+    wide.addEventListener('change', setup);
+    reduce.addEventListener('change', setup);
+  });
+  stages.forEach((s) => [s.plate, s.full].forEach((img) => img && img.addEventListener('load', onScroll, { once: true })));
+
+  /* الافتتاحية تنكشف بعد تحميل الخط والصورة */
+  const ready = () => requestAnimationFrame(() => root.classList.add('is-ready'));
+  Promise.all([
+    document.fonts ? document.fonts.ready : Promise.resolve(),
+    hero && hero.full && !hero.full.complete ? new Promise((r) => { hero.full.onload = r; hero.full.onerror = r; }) : Promise.resolve(),
+  ]).then(ready);
+  setTimeout(ready, 2500);
 
   /* ===== عدّاد مقاعد المدرج ===== */
   const numberFormat = new Intl.NumberFormat('ar-SY');
   const counter = document.querySelector('.count[data-target]');
-  if (counter) {
+  let counted = false;
+  function startCounter() {
+    if (counted || !counter) return;
+    counted = true;
     const target = Number(counter.dataset.target);
-    counter.textContent = numberFormat.format(reduce.matches ? target : 0);
+    if (reduce.matches) { counter.textContent = numberFormat.format(target); return; }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = clamp((now - t0) / 1700);
+      counter.textContent = numberFormat.format(Math.round(target * easeOut(p)));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  if (counter) {
     const countObserver = new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting) return;
-      countObserver.disconnect();
-      if (reduce.matches) { counter.textContent = numberFormat.format(target); return; }
-      const t0 = performance.now();
-      const tick = (now) => {
-        const p = clamp((now - t0) / 1700);
-        counter.textContent = numberFormat.format(Math.round(target * easeOut(p)));
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
+      if (entries[0].isIntersecting && (!wide.matches || reduce.matches)) { countObserver.disconnect(); startCounter(); }
     }, { threshold: 0.8 });
     countObserver.observe(counter);
   }
@@ -221,7 +291,6 @@
   });
   imageDialog.addEventListener('click', (e) => { if (e.target === imageDialog) imageDialog.close(); });
   imageDialog.addEventListener('close', () => { if (opener) opener.focus(); });
-
   document.querySelectorAll('dialog .dialog-close').forEach((b) => {
     b.addEventListener('click', () => b.closest('dialog').close());
   });
