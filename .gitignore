@@ -1,0 +1,6 @@
+.DS_Store
+._*
+.env
+*.bak
+node_modules/
+shot_*.png
