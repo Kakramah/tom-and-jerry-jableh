@@ -13,7 +13,7 @@
 
   /* ===== رسمات الركض: صفّ أفقي من الإطارات، كل إطار بالحجم نفسه وقدمه على خط واحد ===== */
   const SHEETS = {
-    cat: { src: 'images/run-cat-strip.png', frames: 4, aspect: 2.53 },
+    cat: { src: 'images/run-cat-strip.png', frames: 8, aspect: 2.1 },
     mouse: { src: 'images/run-mouse-strip.png', frames: 6, aspect: 0.98 },
   };
 
