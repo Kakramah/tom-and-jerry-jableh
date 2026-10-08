@@ -57,6 +57,8 @@
       cat: el.querySelector('.actor-cat'),
       mouse: el.querySelector('.actor-mouse'),
       conf: SCENES[el.dataset.scene],
+      shown: null,
+      state: { cat: { phase: 0, x: null, y: null }, mouse: { phase: 0, x: null, y: null } },
     };
   });
 
@@ -101,7 +103,9 @@
     return { u: last[1], v: last[2], k: 1 };
   }
 
-  function placeActor(stage, key, p, map) {
+  /* إيقاع الرسمات: 12 رسمة في الثانية ما دام الممثل يتحرك، فلا يتسارع ولا يتجمّد مع عجلة الفأرة */
+  const FPS = 12;
+  function placeActor(stage, key, p, map, dt) {
     const el = stage[key];
     const a = stage.conf && stage.conf[key];
     if (!el || !a) return;
@@ -113,15 +117,17 @@
     let y = map.y(pt.v);
     if (a.hop) y -= map.h(a.hop) * Math.abs(Math.sin(Math.PI * (a.hops || 3) * pt.k));
 
-    /* الإطار يتبدّل مع المسافة المقطوعة، لا مع الزمن */
-    const start = a.path[0]; const end = a.path[a.path.length - 1];
-    const travel = Math.hypot(map.x(end[1]) - map.x(start[1]), map.y(end[2]) - map.y(start[2]));
-    const stride = Math.max(hpx * 0.42, 8);
-    const frame = sheet.frames > 1 ? Math.floor((pt.k * travel) / stride) % sheet.frames : 0;
+    const start = a.path[0];
+    const st = stage.state[key];
+    const moved = st.x === null ? 0 : Math.hypot(x - st.x, y - st.y);
+    st.x = x; st.y = y;
+    if (moved > 0.4) st.phase += dt;
+    const frame = sheet.frames > 1 ? Math.floor(st.phase / (1000 / FPS)) % sheet.frames : 0;
 
     const [l0, l1] = stage.conf.land;
     const visible = p > start[0] - 0.01 ? 1 - smooth(l0, l1, p) : 0;
-    const bob = sheet.frames > 1 ? 0 : Math.abs(Math.sin(pt.k * travel / stride * Math.PI)) * hpx * 0.06;
+    /* ارتفاع خفيف وهبوط مع كل خطوة */
+    const bob = moved > 0.4 ? Math.abs(Math.sin((st.phase / 1000) * FPS * (Math.PI / 2))) * hpx * 0.035 : 0;
 
     el.style.width = `${wpx}px`;
     el.style.height = `${hpx}px`;
@@ -133,12 +139,12 @@
     el.style.transform = `translate3d(${(x - wpx / 2).toFixed(1)}px, ${(y - hpx - bob).toFixed(1)}px, 0) scaleX(${a.right ? 1 : -1})`;
   }
 
-  function render(stage, p, { zoom = true } = {}) {
+  function render(stage, p, { zoom = true, dt = 16 } = {}) {
     const c = stage.conf;
     if (!c) return;
     const map = mapper(stage);
-    placeActor(stage, 'mouse', p, map);
-    placeActor(stage, 'cat', p, map);
+    placeActor(stage, 'mouse', p, map, dt);
+    placeActor(stage, 'cat', p, map, dt);
     const [l0, l1] = c.land;
     stage.frame.style.setProperty('--full', smooth(l0 - 0.02, l1, p).toFixed(3));
     if (zoom) stage.frame.style.setProperty('--zoom', lerp(c.zoom[0], c.zoom[1], easeOut(p)).toFixed(4));
@@ -165,17 +171,28 @@
     return span > 0 ? clamp(-r.top / span) : 0;
   }
 
-  let ticking = false;
-  function frameLoop() {
-    ticking = false;
+  /* التمرير يحدّد الهدف، والمشهد يلحق به بنعومة: عجلة الفأرة لا تُقفز الشخصيتين */
+  let running = false;
+  let last = 0;
+  function frameLoop(now) {
+    const dt = Math.min(64, last ? now - last : 16);
+    last = now;
+    let busy = false;
+    const k = 1 - Math.exp(-dt / 140);
     stages.forEach((s) => {
       const r = s.el.getBoundingClientRect();
       if (r.bottom < -50 || r.top > window.innerHeight + 50) return;
-      if (s.name === 'hero') renderHero(progress(s));
-      else render(s, progress(s));
+      const target = progress(s);
+      if (s.name === 'hero') { renderHero(target); return; }
+      if (s.shown === null) s.shown = target;
+      s.shown += (target - s.shown) * k;
+      if (Math.abs(target - s.shown) < 0.0004) s.shown = target; else busy = true;
+      render(s, s.shown, { dt });
     });
+    if (busy) requestAnimationFrame(frameLoop);
+    else { running = false; last = 0; }
   }
-  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(frameLoop); } };
+  const onScroll = () => { if (!running) { running = true; requestAnimationFrame(frameLoop); } };
 
   /* ===== الهاتف: كل مكان يُعرض مرة بالزمن حين يظهر ===== */
   const played = new WeakSet();
@@ -184,9 +201,11 @@
     played.add(stage);
     const duration = 3600;
     const t0 = performance.now();
+    let prev = t0;
     const step = (now) => {
       const p = clamp((now - t0) / duration);
-      render(stage, p, { zoom: false });
+      render(stage, p, { zoom: false, dt: now - prev });
+      prev = now;
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -207,7 +226,7 @@
     if (wide.matches) {
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
-      frameLoop();
+      onScroll();
     } else {
       stages.forEach((s) => {
         if (s.name === 'hero') return;
