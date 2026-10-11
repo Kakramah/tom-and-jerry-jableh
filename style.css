@@ -347,8 +347,6 @@ dialog::backdrop { background: rgba(var(--sea-rgb), .9); }
 }
 
 /* 404 */
-.lost-page { scroll-behavior: auto; }
-.lost-body { overflow-x: visible; }
 .lost-scene {
   position: relative;
   isolation: isolate;
